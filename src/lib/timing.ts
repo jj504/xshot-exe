@@ -9,7 +9,8 @@ export const TIMING = {
   NOISE_FRAME: 16,
 } as const;
 
-export const SCRAMBLE_CHARS = String.raw`ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*!?><{}[]/:;.,`;
+// Spec-defined scramble set: Unicode box-drawing + symbols
+export const SCRAMBLE_CHARS = "\u2591\u2592\u2593\u2588\u250C\u2510\u2514\u2518\u2500\u2502\u252C\u2534\u251C\u2524\u253C\u25C6\u25C7\u25CF\u25CB\u25A0\u25A1\u25B8\u25BE\u2573\u2295\u2297/:;.,*#@!?><{}[]01";
 
 export const DECODE_PRESETS = {
   headline: { charCycleDuration: 150, charCycleFrameRate: 60, staggerDelay: 25, rgbFringe: true, fringeOffset: 1.5 },
