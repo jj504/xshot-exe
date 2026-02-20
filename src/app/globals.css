@@ -51,7 +51,7 @@ body {
   -moz-osx-font-smoothing: auto;
 }
 
-/* ======= DOT GRID ======= */
+/* === DOT GRID === */
 .dot-grid {
   position: fixed;
   inset: 0;
@@ -62,18 +62,15 @@ body {
   transition: opacity 1.2s ease;
 }
 
-/* ======= SCANLINES ======= */
+/* === SCANLINES === */
 .scanlines {
   pointer-events: none;
   position: fixed;
   inset: 0;
   z-index: 9998;
   background: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+    to bottom, transparent, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
   );
   animation: scanlineDrift 8s linear infinite;
 }
@@ -82,20 +79,55 @@ body {
   100% { transform: translateY(4px); }
 }
 
-/* ======= BLINK ======= */
+/* === BLINK === */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
 .cursor-blink { animation: blink 1s step-end infinite; }
+.status-blink { animation: blink 1.5s step-end infinite; }
 
-/* ======= PULSE ======= */
+/* === PULSE === */
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
 
-/* ======= TYPE CLASSES ======= */
+/* === BORDER FLASH (single frame on CTA button appear) === */
+@keyframes borderFlash {
+  0% { box-shadow: 0 0 0 1px var(--interference-orange), 0 0 12px 2px rgba(255,90,31,0.4); }
+  30% { box-shadow: 0 0 0 1px var(--interference-orange), 0 0 0 0 transparent; }
+  100% { box-shadow: none; }
+}
+.border-flash {
+  animation: borderFlash 0.3s linear forwards;
+}
+
+/* === MODULE BORDER DRAW === */
+/* Animated border overlay that traces the perimeter */
+.module-border-overlay {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  z-index: 1;
+}
+.module-border-overlay svg {
+  width: 100%;
+  height: 100%;
+}
+.module-border-overlay rect {
+  fill: none;
+  stroke-dasharray: var(--border-len, 1000);
+  stroke-dashoffset: var(--border-len, 1000);
+}
+.module-border-overlay.drawing rect {
+  animation: drawBorder var(--draw-duration, 0.2s) linear forwards;
+}
+@keyframes drawBorder {
+  to { stroke-dashoffset: 0; }
+}
+
+/* === TYPE CLASSES === */
 .type-display {
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -110,7 +142,7 @@ body {
   font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
 }
 
-/* ======= RGB FRINGE ======= */
+/* === RGB FRINGE === */
 .rgb-fringe {
   position: relative;
   display: inline-block;
@@ -137,25 +169,24 @@ body {
   clip-path: inset(50% 0 0 0);
 }
 
-/* ======= MODULE BORDER DRAW ======= */
-@keyframes borderDraw {
-  0% { clip-path: inset(0 100% 100% 0); }
-  25% { clip-path: inset(0 0 100% 0); }
-  50% { clip-path: inset(0 0 0 0); }
-  100% { clip-path: inset(0 0 0 0); }
-}
-.module-border-draw {
-  animation: borderDraw 0.2s linear forwards;
-}
-
-/* ======= REDUCED MOTION ======= */
+/* === REDUCED MOTION === */
 @media (prefers-reduced-motion: reduce) {
   .scanlines { animation: none; }
-  .cursor-blink { animation: none; opacity: 1; }
-  .module-border-draw { animation: none; clip-path: none; }
+  .cursor-blink, .status-blink { animation: none; opacity: 1; }
+  .border-flash { animation: none; }
+  .module-border-overlay.drawing rect { animation: none; stroke-dashoffset: 0; }
 }
 
 ::selection {
   background: var(--signal-cyan-15);
   color: var(--phosphor-white);
+}
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 768px) {
+  :root {
+    --text-system-lg: 1rem;
+    --text-system-sm: 0.75rem;
+    --text-label: 0.625rem;
+  }
 }

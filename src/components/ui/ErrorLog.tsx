@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+
+const SCRAMBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*";
 
 const LOG_LINES = [
   { time: "03:12:41", text: "retry 4/5... model timeout (flux-dev)", type: "normal" },
@@ -28,6 +30,7 @@ interface ErrorLogProps {
 export default function ErrorLog({ active = false }: ErrorLogProps) {
   const [visibleLines, setVisibleLines] = useState(0);
   const [allShown, setAllShown] = useState(false);
+  const [glitchMap, setGlitchMap] = useState<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +55,7 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
     if (el && !allShown) el.scrollTop = el.scrollHeight;
   }, [visibleLines, allShown]);
 
-  // Continuous slow scroll loop once all lines shown
+  // Continuous slow scroll loop
   useEffect(() => {
     if (!allShown) return;
     const container = containerRef.current;
@@ -60,11 +63,9 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
     if (!container || !inner) return;
 
     let y = 0;
-    const speed = 0.3; // px per frame
     let animId: number;
-
     const scroll = () => {
-      y += speed;
+      y += 0.3;
       if (y >= inner.scrollHeight / 2) y = 0;
       container.scrollTop = y;
       animId = requestAnimationFrame(scroll);
@@ -73,17 +74,42 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
     return () => cancelAnimationFrame(animId);
   }, [allShown]);
 
-  const getColor = (type: string) => {
+  // Random character glitch effect
+  useEffect(() => {
+    if (!allShown) return;
+    const iv = setInterval(() => {
+      const lineIdx = Math.floor(Math.random() * LOG_LINES.length);
+      const charIdx = Math.floor(Math.random() * LOG_LINES[lineIdx].text.length);
+      const key = `${lineIdx}-${charIdx}`;
+      const glitchChar = SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
+      setGlitchMap(prev => ({ ...prev, [key]: glitchChar }));
+      setTimeout(() => {
+        setGlitchMap(prev => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      }, 100);
+    }, 800);
+    return () => clearInterval(iv);
+  }, [allShown]);
+
+  const getColor = useCallback((type: string) => {
     switch (type) {
       case "error": return "var(--interference-orange)";
       case "warn": return "var(--signal-cyan-60)";
       default: return "var(--phosphor-dim)";
     }
-  };
+  }, []);
 
-  const linesToShow = allShown ? LOG_LINES : LOG_LINES.slice(0, visibleLines);
-  // For looping, duplicate lines
-  const renderLines = allShown ? [...LOG_LINES, ...LOG_LINES] : linesToShow;
+  const applyGlitch = useCallback((text: string, lineIdx: number) => {
+    return text.split("").map((ch, ci) => {
+      const key = `${lineIdx}-${ci}`;
+      return glitchMap[key] || ch;
+    }).join("");
+  }, [glitchMap]);
+
+  const linesToRender = allShown ? [...LOG_LINES, ...LOG_LINES] : LOG_LINES.slice(0, visibleLines);
 
   return (
     <div
@@ -92,12 +118,15 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
       style={{ fontSize: "var(--text-system-sm)", height: "280px" }}
     >
       <div ref={innerRef}>
-        {renderLines.map((line, i) => (
-          <div key={i} className="flex gap-2 leading-relaxed whitespace-nowrap">
-            <span style={{ color: "var(--signal-ghost)", flexShrink: 0 }}>[{line.time}]</span>
-            <span style={{ color: getColor(line.type) }}>{line.text}</span>
-          </div>
-        ))}
+        {linesToRender.map((line, i) => {
+          const realIdx = i % LOG_LINES.length;
+          return (
+            <div key={i} className="flex gap-2 leading-relaxed whitespace-nowrap">
+              <span style={{ color: "var(--signal-ghost)", flexShrink: 0 }}>[{line.time}]</span>
+              <span style={{ color: getColor(line.type) }}>{applyGlitch(line.text, realIdx)}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
