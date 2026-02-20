@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 const SCRAMBLE_SET = "\u2591\u2592\u2593\u2588\u250C\u2510\u2514\u2518\u2500\u2502\u252C\u2534\u251C\u2524\u253C\u2554\u2557\u255A\u255D\u2550\u2551\u25C6\u25C7\u25CF\u25CB\u25A0\u25A1\u25B8\u25BE\u2573\u2295\u2297/:;.,*#@!?><{}[]01";
 
-const TARGET_ART = [
+const ART_DESKTOP = [
   "                                        ",
   "   \u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510                         ",
   "   \u2502  INPUT        \u2502                         ",
@@ -33,6 +33,23 @@ const TARGET_ART = [
   "   v2.1.3 \u2014 POST /v1/rx-0847             ",
 ];
 
+const ART_MOBILE = [
+  "                            ",
+  "  \u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510               ",
+  "  \u2502 INPUT      \u2502               ",
+  "  \u2514\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518               ",
+  "       \u2502                      ",
+  "       \u25BC                      ",
+  "  \u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510               ",
+  "  \u2502 STEP-01    \u2502\u2500 on_err      ",
+  "  \u2514\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518               ",
+  "       \u2502                      ",
+  "       \u25BC                      ",
+  "  \u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510               ",
+  "  \u2502 OUTPUT     \u2502               ",
+  "  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518               ",
+];
+
 interface CharacterGridProps {
   active?: boolean;
   onLocked?: () => void;
@@ -55,25 +72,26 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
   const lockedFired = useRef(false);
   const onLockedRef = useRef(onLocked);
   onLockedRef.current = onLocked;
+  const [isMobile, setIsMobile] = useState(false);
 
-  const COLS = 40;
-  const ROWS = TARGET_ART.length;
+  useEffect(() => { setIsMobile(window.innerWidth < 768); }, []);
+
+  const art = isMobile ? ART_MOBILE : ART_DESKTOP;
+  const COLS = isMobile ? 28 : 40;
+  const ROWS = art.length;
 
   const initCells = useCallback(() => {
     const cells: Cell[][] = [];
     for (let r = 0; r < ROWS; r++) {
       const row: Cell[] = [];
       for (let c = 0; c < COLS; c++) {
-        const target = TARGET_ART[r]?.[c] || " ";
-        row.push({
-          char: SCRAMBLE_SET[Math.floor(Math.random() * SCRAMBLE_SET.length)],
-          target, resolved: false, opacity: 0.4, cycleTimer: 0,
-        });
+        const target = art[r]?.[c] || " ";
+        row.push({ char: SCRAMBLE_SET[Math.floor(Math.random() * SCRAMBLE_SET.length)], target, resolved: false, opacity: 0.4, cycleTimer: 0 });
       }
       cells.push(row);
     }
     return cells;
-  }, [ROWS]);
+  }, [ROWS, COLS, art]);
 
   useEffect(() => {
     if (!active) return;
@@ -82,13 +100,31 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Handle DPR for sharp rendering
+    // Measure the actual monospace character width for the font at our target size
+    // This ensures box-drawing characters connect with zero gaps
     const dpr = window.devicePixelRatio || 1;
     const displayW = canvas.clientWidth;
     const displayH = canvas.clientHeight;
     canvas.width = displayW * dpr;
     canvas.height = displayH * dpr;
     ctx.scale(dpr, dpr);
+
+    // Calculate font size to make chars fill cells exactly
+    const targetCellW = displayW / COLS;
+    const targetCellH = displayH / ROWS;
+
+    // Find the right font size where a character's advance width matches targetCellW
+    // Start from cell height and adjust
+    let fontSize = Math.floor(targetCellH * 0.9);
+    ctx.font = `${fontSize}px "JetBrains Mono", "Courier New", monospace`;
+    let measured = ctx.measureText("M").width;
+
+    // Scale font so character width matches cell width
+    if (measured > 0) {
+      fontSize = Math.floor(fontSize * (targetCellW / measured));
+    }
+    // Clamp
+    fontSize = Math.max(7, Math.min(fontSize, 16));
 
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mq.matches) {
@@ -103,11 +139,11 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
     }
     startRef.current = performance.now();
 
-    const CW = displayW / COLS;
-    const CH = displayH / ROWS;
     const cx = COLS / 2, cy = ROWS / 2;
     const maxD = Math.sqrt(cx * cx + cy * cy);
     let lastRipple = 0, cursorOn = true, lastCursor = 0, lastRetry = 0;
+    const statusRow = ROWS <= 14 ? -1 : 24;
+    const retryRow = ROWS <= 14 ? -1 : 15;
 
     const animate = (now: number) => {
       const elapsed = now - startRef.current;
@@ -121,25 +157,20 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
         if (!lockedFired.current) { lockedFired.current = true; onLockedRef.current?.(); }
       }
 
-      if (phaseRef.current === "ambient") {
-        if (elapsed - lastCursor > 1000) { cursorOn = !cursorOn; lastCursor = elapsed; }
-      }
+      if (phaseRef.current === "ambient" && elapsed - lastCursor > 1000) { cursorOn = !cursorOn; lastCursor = elapsed; }
 
       let retryFlick = false;
-      if (phaseRef.current === "ambient" && elapsed - lastRetry > 8000) { lastRetry = elapsed; retryFlick = true; }
+      if (phaseRef.current === "ambient" && retryRow >= 0 && elapsed - lastRetry > 8000) { lastRetry = elapsed; retryFlick = true; }
 
-      const fontSize = Math.max(9, Math.floor(CH * 0.78));
-      ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
+      ctx.font = `${fontSize}px "JetBrains Mono", "Courier New", monospace`;
+      ctx.textBaseline = "top";
 
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const cell = cells[r][c];
 
           if (phaseRef.current === "noise") {
-            if (elapsed - cell.cycleTimer > 60) {
-              cell.char = SCRAMBLE_SET[Math.floor(Math.random() * SCRAMBLE_SET.length)];
-              cell.cycleTimer = elapsed;
-            }
+            if (elapsed - cell.cycleTimer > 60) { cell.char = SCRAMBLE_SET[Math.floor(Math.random() * SCRAMBLE_SET.length)]; cell.cycleTimer = elapsed; }
             cell.opacity = 0.4;
           } else if (phaseRef.current === "resolve" && !cell.resolved) {
             const dist = Math.sqrt((c - cx) ** 2 + (r - cy) ** 2);
@@ -151,16 +182,16 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
             }
           }
 
-          if (phaseRef.current === "ambient" && retryFlick && r === 15 && c >= 19 && cell.target !== " ") {
+          if (phaseRef.current === "ambient" && retryFlick && r === retryRow && c >= 19 && cell.target !== " ") {
             cell.char = SCRAMBLE_SET[Math.floor(Math.random() * SCRAMBLE_SET.length)];
             setTimeout(() => { cell.char = cell.target; }, 120);
           }
 
           let ch = cell.char;
-          if (phaseRef.current === "ambient" && r === 24 && c === 24) ch = cursorOn ? "\u25A0" : " ";
+          if (phaseRef.current === "ambient" && r === statusRow && c === 24) ch = cursorOn ? "\u25A0" : " ";
 
           if (ch !== " ") {
-            const line = TARGET_ART[r] || "";
+            const line = art[r] || "";
             let color: string;
             if (!cell.resolved) color = `rgba(0,240,255,${cell.opacity})`;
             else if ((line.includes("on_err") || line.includes("retry:")) && c > 18) color = `rgba(176,196,196,${cell.opacity})`;
@@ -168,11 +199,15 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
             else color = `rgba(0,240,255,${cell.opacity})`;
 
             ctx.fillStyle = color;
-            ctx.fillText(ch, c * CW, r * CH + CH * 0.8);
+            // Position character at exact cell boundary for seamless box-drawing
+            const x = c * targetCellW;
+            const y = r * targetCellH + (targetCellH - fontSize) / 2;
+            ctx.fillText(ch, x, y);
           }
         }
       }
 
+      // Ambient ripple
       if (phaseRef.current === "ambient" && elapsed - lastRipple > 11000) {
         lastRipple = elapsed;
         const count = Math.floor(COLS * ROWS * 0.05);
@@ -192,13 +227,14 @@ export default function CharacterGrid({ active = false, onLocked }: CharacterGri
 
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
-  }, [active, initCells, ROWS]);
+  }, [active, initCells, ROWS, COLS, art]);
 
   return (
     <canvas
       ref={canvasRef}
       className="w-full h-auto"
-      style={{ aspectRatio: "520 / 416", maxWidth: "520px" }}
+      style={{ aspectRatio: isMobile ? "28 / 14" : "40 / 26", maxWidth: isMobile ? "360px" : "520px" }}
+      aria-hidden="true"
     />
   );
 }

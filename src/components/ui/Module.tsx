@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, type ReactNode } from "react";
+import { useEffect, useState, useRef, type ReactNode, type CSSProperties } from "react";
+import { useReducedMotion } from "@/lib/useIsMobile";
 
 interface ModuleProps {
   moduleId: string;
@@ -9,10 +10,11 @@ interface ModuleProps {
   statusBlink?: boolean;
   active?: boolean;
   delay?: number;
-  drawDuration?: number; // ms, default 200
+  drawDuration?: number;
   borderActiveColor?: string;
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
   onBooted?: () => void;
 }
 
@@ -27,115 +29,66 @@ export default function Module({
   borderActiveColor = "var(--signal-cyan-60)",
   children,
   className = "",
+  style: extraStyle,
   onBooted,
 }: ModuleProps) {
+  const reducedMotion = useReducedMotion();
   const [phase, setPhase] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [perimeterLen, setPerimeterLen] = useState(1000);
   const onBootedRef = useRef(onBooted);
   onBootedRef.current = onBooted;
 
-  // Measure perimeter for SVG stroke-dasharray
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const w = el.offsetWidth;
-    const h = el.offsetHeight;
-    setPerimeterLen(2 * (w + h));
+    setPerimeterLen(2 * (el.offsetWidth + el.offsetHeight));
   }, []);
 
   useEffect(() => {
     if (!active) return;
+    if (reducedMotion) { setPhase(4); onBootedRef.current?.(); return; }
     const t: ReturnType<typeof setTimeout>[] = [];
     t.push(setTimeout(() => setPhase(1), delay));
     t.push(setTimeout(() => setPhase(2), delay + drawDuration));
     t.push(setTimeout(() => setPhase(3), delay + drawDuration + 150));
     t.push(setTimeout(() => { setPhase(4); onBootedRef.current?.(); }, delay + drawDuration + 300));
     return () => t.forEach(clearTimeout);
-  }, [active, delay, drawDuration]);
+  }, [active, delay, drawDuration, reducedMotion]);
 
   const ghostColor = "var(--signal-ghost)";
   const isDrawn = phase >= 1;
+  const activeBorder = isDrawn ? borderActiveColor : ghostColor;
 
   return (
     <div
       ref={containerRef}
       className={`relative ${className}`}
       style={{
-        border: `1px solid ${isDrawn ? borderActiveColor : ghostColor}`,
+        border: `1px solid ${activeBorder}`,
         background: "var(--void-black)",
-        transition: isDrawn ? `border-color ${drawDuration}ms linear` : "none",
+        transition: (isDrawn && !reducedMotion) ? `border-color ${drawDuration}ms linear` : "none",
+        ...extraStyle,
       }}
     >
-      {/* Animated border overlay */}
-      <div
-        className={`module-border-overlay ${isDrawn ? "drawing" : ""}`}
-        style={{
-          "--border-len": perimeterLen,
-          "--draw-duration": `${drawDuration}ms`,
-        } as React.CSSProperties}
-      >
-        <svg preserveAspectRatio="none" viewBox={`0 0 100 100`}>
-          <rect
-            x="0" y="0" width="100" height="100"
-            vectorEffect="non-scaling-stroke"
-            stroke={isDrawn ? borderActiveColor : ghostColor}
-            strokeWidth="1"
-          />
-        </svg>
-      </div>
+      {!reducedMotion && (
+        <div className={`module-border-overlay ${isDrawn ? "drawing" : ""}`} style={{ "--border-len": perimeterLen, "--draw-duration": `${drawDuration}ms` } as React.CSSProperties} aria-hidden="true">
+          <svg preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0" y="0" width="100" height="100" vectorEffect="non-scaling-stroke" stroke={activeBorder} strokeWidth="1" fill="none" /></svg>
+        </div>
+      )}
 
-      {/* Corner registration marks */}
-      {[
-        "top-[-1px] left-[-1px] border-t-2 border-l-2",
-        "top-[-1px] right-[-1px] border-t-2 border-r-2",
-        "bottom-[-1px] left-[-1px] border-b-2 border-l-2",
-        "bottom-[-1px] right-[-1px] border-b-2 border-r-2",
-      ].map((pos, i) => (
-        <div
-          key={i}
-          className={`absolute w-3 h-3 z-[2] ${pos}`}
-          style={{
-            borderColor: isDrawn ? borderActiveColor : ghostColor,
-            transition: isDrawn ? `border-color ${drawDuration}ms linear` : "none",
-          }}
-        />
+      {["top-[-1px] left-[-1px] border-t-2 border-l-2", "top-[-1px] right-[-1px] border-t-2 border-r-2", "bottom-[-1px] left-[-1px] border-b-2 border-l-2", "bottom-[-1px] right-[-1px] border-b-2 border-r-2"].map((pos, i) => (
+        <div key={i} className={`absolute w-3 h-3 z-[2] ${pos}`} style={{ borderColor: activeBorder, transition: (isDrawn && !reducedMotion) ? `border-color ${drawDuration}ms linear` : "none" }} aria-hidden="true" />
       ))}
 
-      {/* Header */}
-      <div
-        className="relative z-[2] flex justify-between items-center px-4 py-2"
-        style={{ borderBottom: `1px solid ${ghostColor}` }}
-      >
-        <span
-          className="type-label"
-          style={{
-            color: borderActiveColor,
-            opacity: phase >= 2 ? 1 : 0,
-            transition: "opacity 0.15s step-end",
-          }}
-        >
-          {moduleId}
-        </span>
+      <div className="relative z-[2] flex justify-between items-center px-4 py-2" style={{ borderBottom: `1px solid ${ghostColor}` }}>
+        <span className="type-label" style={{ color: borderActiveColor, opacity: phase >= 2 ? 1 : 0, transition: reducedMotion ? "none" : "opacity 0.15s step-end" }}>{moduleId}</span>
         {status && (
-          <span
-            className={`type-label ${statusBlink && phase >= 3 ? "status-blink" : ""}`}
-            style={{
-              color: statusColor,
-              opacity: phase >= 3 ? 1 : 0,
-              transition: "none",
-            }}
-          >
-            {status}
-          </span>
+          <span className={`type-label ${statusBlink && phase >= 3 && !reducedMotion ? "status-blink" : ""}`} style={{ color: statusColor, opacity: phase >= 3 ? 1 : 0 }}>{status}</span>
         )}
       </div>
 
-      {/* Content */}
-      <div
-        className="relative z-[2] p-4 md:p-6"
-        style={{ opacity: phase >= 4 ? 1 : 0, transition: "opacity 0.05s step-end" }}
-      >
+      <div className="relative z-[2] p-4 md:p-6" style={{ opacity: phase >= 4 ? 1 : 0, transition: reducedMotion ? "none" : "opacity 0.05s step-end" }}>
         {children}
       </div>
     </div>

@@ -31,14 +31,35 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center z-10">
-      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-20">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-
+    <section
+      className="relative z-10"
+      style={{ minHeight: "100vh", display: "flex", alignItems: "center" }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "1280px",
+          marginLeft: "auto",
+          marginRight: "auto",
+          paddingLeft: "clamp(24px, 4vw, 48px)",
+          paddingRight: "clamp(24px, 4vw, 48px)",
+          paddingTop: "80px",
+          paddingBottom: "80px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "48px",
+          }}
+          className="lg:flex-row lg:gap-16 lg:items-center"
+        >
           {/* COPY LEFT */}
-          <div className="flex-1 lg:max-w-[55%] space-y-8">
+          <div className="flex-1 lg:max-w-[55%]" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
 
-            {/* Pre-headline: ghost -> cyan transition */}
+            {/* Pre-headline */}
             <div
               className="type-label"
               style={{
@@ -64,45 +85,15 @@ export default function Hero() {
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', sans-serif",
               }}
             >
-              <DecodeText
-                text="ship your pipeline."
-                preset="headline"
-                active={phase >= 2}
-                className="block"
-              />
-              <DecodeText
-                text="stop babysitting it."
-                preset="headline"
-                active={phase >= 2}
-                delay={600}
-                onComplete={onHeadlineDone}
-                className="block"
-              />
+              <DecodeText text="ship your pipeline." preset="headline" active={phase >= 2} className="block" />
+              <DecodeText text="stop babysitting it." preset="headline" active={phase >= 2} delay={600} onComplete={onHeadlineDone} className="block" />
             </h1>
 
             {/* Subline */}
-            <div className="space-y-1" style={{ fontSize: "var(--text-system-lg)" }}>
-              <DecodeText
-                text="turn fragile notebooks, comfy workflows, and glue code into"
-                preset="body"
-                active={phase >= 3}
-                className="block font-mono"
-              />
-              <DecodeText
-                text="typed, linear pipelines with retries, fallbacks, and a stable api."
-                preset="body"
-                active={phase >= 3}
-                delay={700}
-                className="block font-mono"
-              />
-              <DecodeText
-                text="deploy once. behavior is predictable. failures are explainable."
-                preset="body"
-                active={phase >= 3}
-                delay={1400}
-                onComplete={onSublineDone}
-                className="block font-mono"
-              />
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "var(--text-system-lg)" }}>
+              <DecodeText text="turn fragile notebooks, comfy workflows, and glue code into" preset="body" active={phase >= 3} className="block font-mono" />
+              <DecodeText text="typed, linear pipelines with retries, fallbacks, and a stable api." preset="body" active={phase >= 3} delay={700} className="block font-mono" />
+              <DecodeText text="deploy once. behavior is predictable. failures are explainable." preset="body" active={phase >= 3} delay={1400} onComplete={onSublineDone} className="block font-mono" />
             </div>
 
             {/* CTA */}
@@ -112,7 +103,7 @@ export default function Hero() {
           </div>
 
           {/* GRID RIGHT */}
-          <div className="flex-1 lg:max-w-[45%] w-full">
+          <div className="flex-1 lg:max-w-[45%]" style={{ width: "100%" }}>
             <Module
               moduleId="SYS-00"
               status={gridLocked ? "LOCKED" : phase >= 1 ? "RECEIVING..." : ""}
@@ -122,10 +113,7 @@ export default function Hero() {
               delay={0}
               className="w-full"
             >
-              <CharacterGrid
-                active={phase >= 1}
-                onLocked={() => setGridLocked(true)}
-              />
+              <CharacterGrid active={phase >= 1} onLocked={() => setGridLocked(true)} />
             </Module>
           </div>
         </div>

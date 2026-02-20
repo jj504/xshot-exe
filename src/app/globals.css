@@ -53,10 +53,7 @@ body {
 
 /* === DOT GRID === */
 .dot-grid {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image: radial-gradient(circle, var(--signal-ghost) 1px, transparent 1px);
   background-size: 24px 24px;
   transition: opacity 1.2s ease;
@@ -64,14 +61,8 @@ body {
 
 /* === SCANLINES === */
 .scanlines {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: repeating-linear-gradient(
-    to bottom, transparent, transparent 2px,
-    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
-  );
+  pointer-events: none; position: fixed; inset: 0; z-index: 9998;
+  background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
   animation: scanlineDrift 8s linear infinite;
 }
 @keyframes scanlineDrift {
@@ -80,41 +71,26 @@ body {
 }
 
 /* === BLINK === */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .cursor-blink { animation: blink 1s step-end infinite; }
 .status-blink { animation: blink 1.5s step-end infinite; }
 
 /* === PULSE === */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
+@keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 
-/* === BORDER FLASH (single frame on CTA button appear) === */
+/* === BORDER FLASH === */
 @keyframes borderFlash {
   0% { box-shadow: 0 0 0 1px var(--interference-orange), 0 0 12px 2px rgba(255,90,31,0.4); }
   30% { box-shadow: 0 0 0 1px var(--interference-orange), 0 0 0 0 transparent; }
   100% { box-shadow: none; }
 }
-.border-flash {
-  animation: borderFlash 0.3s linear forwards;
-}
+.border-flash { animation: borderFlash 0.3s linear forwards; }
 
 /* === MODULE BORDER DRAW === */
-/* Animated border overlay that traces the perimeter */
 .module-border-overlay {
-  position: absolute;
-  inset: -1px;
-  pointer-events: none;
-  z-index: 1;
+  position: absolute; inset: -1px; pointer-events: none; z-index: 1;
 }
-.module-border-overlay svg {
-  width: 100%;
-  height: 100%;
-}
+.module-border-overlay svg { width: 100%; height: 100%; }
 .module-border-overlay rect {
   fill: none;
   stroke-dasharray: var(--border-len, 1000);
@@ -123,66 +99,40 @@ body {
 .module-border-overlay.drawing rect {
   animation: drawBorder var(--draw-duration, 0.2s) linear forwards;
 }
-@keyframes drawBorder {
-  to { stroke-dashoffset: 0; }
-}
+@keyframes drawBorder { to { stroke-dashoffset: 0; } }
 
-/* === TYPE CLASSES === */
-.type-display {
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 1.05;
-}
-.type-label {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--text-label);
-}
-.type-system {
-  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
-}
+/* === TYPE === */
+.type-display { text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.05; }
+.type-label { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--text-label); }
+.type-system { font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace; }
 
 /* === RGB FRINGE === */
-.rgb-fringe {
-  position: relative;
-  display: inline-block;
+.rgb-fringe { position: relative; display: inline-block; }
+.rgb-fringe::before, .rgb-fringe::after {
+  content: attr(data-text); position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%; overflow: hidden; pointer-events: none;
 }
-.rgb-fringe::before,
-.rgb-fringe::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-.rgb-fringe::before {
-  color: rgba(0, 240, 255, 0.5);
-  transform: translate(-1.5px, 0);
-  clip-path: inset(0 0 50% 0);
-}
-.rgb-fringe::after {
-  color: rgba(255, 90, 31, 0.35);
-  transform: translate(1.5px, 0);
-  clip-path: inset(50% 0 0 0);
+.rgb-fringe::before { color: rgba(0,240,255,0.5); transform: translate(-1.5px, 0); clip-path: inset(0 0 50% 0); }
+.rgb-fringe::after { color: rgba(255,90,31,0.35); transform: translate(1.5px, 0); clip-path: inset(50% 0 0 0); }
+
+/* === KEYBOARD FOCUS === */
+a:focus-visible, button:focus-visible {
+  outline: 1px solid var(--signal-cyan-100);
+  outline-offset: 2px;
 }
 
 /* === REDUCED MOTION === */
 @media (prefers-reduced-motion: reduce) {
   .scanlines { animation: none; }
   .cursor-blink, .status-blink { animation: none; opacity: 1; }
-  .border-flash { animation: none; }
+  .border-flash { animation: none; box-shadow: none; }
   .module-border-overlay.drawing rect { animation: none; stroke-dashoffset: 0; }
+  .rgb-fringe::before, .rgb-fringe::after { display: none; }
 }
 
-::selection {
-  background: var(--signal-cyan-15);
-  color: var(--phosphor-white);
-}
+::selection { background: var(--signal-cyan-15); color: var(--phosphor-white); }
 
-/* === MOBILE RESPONSIVE === */
+/* === MOBILE === */
 @media (max-width: 768px) {
   :root {
     --text-system-lg: 1rem;

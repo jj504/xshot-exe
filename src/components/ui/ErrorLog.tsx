@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useReducedMotion } from "@/lib/useIsMobile";
 
 const SCRAMBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*";
 
@@ -28,26 +29,32 @@ interface ErrorLogProps {
 }
 
 export default function ErrorLog({ active = false }: ErrorLogProps) {
+  const reducedMotion = useReducedMotion();
   const [visibleLines, setVisibleLines] = useState(0);
   const [allShown, setAllShown] = useState(false);
   const [glitchMap, setGlitchMap] = useState<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
 
+  // Reduced motion: show all lines immediately
+  useEffect(() => {
+    if (active && reducedMotion) {
+      setVisibleLines(LOG_LINES.length);
+      setAllShown(true);
+    }
+  }, [active, reducedMotion]);
+
   // Line-by-line reveal
   useEffect(() => {
-    if (!active) return;
+    if (!active || reducedMotion) return;
     let i = 0;
     const iv = setInterval(() => {
       i++;
       setVisibleLines(i);
-      if (i >= LOG_LINES.length) {
-        clearInterval(iv);
-        setTimeout(() => setAllShown(true), 400);
-      }
+      if (i >= LOG_LINES.length) { clearInterval(iv); setTimeout(() => setAllShown(true), 400); }
     }, 200);
     return () => clearInterval(iv);
-  }, [active]);
+  }, [active, reducedMotion]);
 
   // Auto-scroll during reveal
   useEffect(() => {
@@ -55,13 +62,12 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
     if (el && !allShown) el.scrollTop = el.scrollHeight;
   }, [visibleLines, allShown]);
 
-  // Continuous slow scroll loop
+  // Continuous scroll loop (not on reduced motion)
   useEffect(() => {
-    if (!allShown) return;
+    if (!allShown || reducedMotion) return;
     const container = containerRef.current;
     const inner = innerRef.current;
     if (!container || !inner) return;
-
     let y = 0;
     let animId: number;
     const scroll = () => {
@@ -72,27 +78,20 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
     };
     animId = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animId);
-  }, [allShown]);
+  }, [allShown, reducedMotion]);
 
-  // Random character glitch effect
+  // Character glitch (not on reduced motion)
   useEffect(() => {
-    if (!allShown) return;
+    if (!allShown || reducedMotion) return;
     const iv = setInterval(() => {
       const lineIdx = Math.floor(Math.random() * LOG_LINES.length);
       const charIdx = Math.floor(Math.random() * LOG_LINES[lineIdx].text.length);
       const key = `${lineIdx}-${charIdx}`;
-      const glitchChar = SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
-      setGlitchMap(prev => ({ ...prev, [key]: glitchChar }));
-      setTimeout(() => {
-        setGlitchMap(prev => {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
-      }, 100);
+      setGlitchMap(prev => ({ ...prev, [key]: SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)] }));
+      setTimeout(() => setGlitchMap(prev => { const n = { ...prev }; delete n[key]; return n; }), 100);
     }, 800);
     return () => clearInterval(iv);
-  }, [allShown]);
+  }, [allShown, reducedMotion]);
 
   const getColor = useCallback((type: string) => {
     switch (type) {
@@ -103,30 +102,26 @@ export default function ErrorLog({ active = false }: ErrorLogProps) {
   }, []);
 
   const applyGlitch = useCallback((text: string, lineIdx: number) => {
-    return text.split("").map((ch, ci) => {
-      const key = `${lineIdx}-${ci}`;
-      return glitchMap[key] || ch;
-    }).join("");
+    return text.split("").map((ch, ci) => glitchMap[`${lineIdx}-${ci}`] || ch).join("");
   }, [glitchMap]);
 
-  const linesToRender = allShown ? [...LOG_LINES, ...LOG_LINES] : LOG_LINES.slice(0, visibleLines);
+  const linesToRender = (allShown && !reducedMotion) ? [...LOG_LINES, ...LOG_LINES] : LOG_LINES.slice(0, visibleLines);
 
   return (
     <div
       ref={containerRef}
       className="font-mono overflow-hidden"
       style={{ fontSize: "var(--text-system-sm)", height: "280px" }}
+      role="log"
+      aria-label="Pipeline error log"
     >
       <div ref={innerRef}>
-        {linesToRender.map((line, i) => {
-          const realIdx = i % LOG_LINES.length;
-          return (
-            <div key={i} className="flex gap-2 leading-relaxed whitespace-nowrap">
-              <span style={{ color: "var(--signal-ghost)", flexShrink: 0 }}>[{line.time}]</span>
-              <span style={{ color: getColor(line.type) }}>{applyGlitch(line.text, realIdx)}</span>
-            </div>
-          );
-        })}
+        {linesToRender.map((line, i) => (
+          <div key={i} className="flex gap-2 leading-relaxed whitespace-nowrap">
+            <span style={{ color: "var(--signal-ghost)", flexShrink: 0 }}>[{line.time}]</span>
+            <span style={{ color: getColor(line.type) }}>{applyGlitch(line.text, i % LOG_LINES.length)}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

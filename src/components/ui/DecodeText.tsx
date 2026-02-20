@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SCRAMBLE_CHARS, DECODE_PRESETS, type DecodePreset } from "@/lib/timing";
+import { SCRAMBLE_CHARS, DECODE_PRESETS, DECODE_PRESETS_MOBILE, type DecodePreset } from "@/lib/timing";
+import { useIsMobile, useReducedMotion } from "@/lib/useIsMobile";
 
 interface DecodeTextProps {
   text: string;
@@ -27,20 +28,18 @@ export default function DecodeText({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  const config = DECODE_PRESETS[preset];
+  const isMobile = useIsMobile();
+  const reducedMotion = useReducedMotion();
+  const config = isMobile ? DECODE_PRESETS_MOBILE[preset] : DECODE_PRESETS[preset];
 
   useEffect(() => {
     if (!active || doneRef.current) return;
 
-    // Reduced motion: instant
-    if (typeof window !== "undefined") {
-      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-      if (mq.matches) {
-        setDisplayText(text);
-        doneRef.current = true;
-        onCompleteRef.current?.();
-        return;
-      }
+    if (reducedMotion) {
+      setDisplayText(text);
+      doneRef.current = true;
+      onCompleteRef.current?.();
+      return;
     }
 
     setIsDecoding(true);
@@ -55,7 +54,6 @@ export default function DecodeText({
 
       for (let i = 0; i < text.length; i++) {
         if (text[i] === " " || text[i] === "\n") { result += text[i]; continue; }
-
         const charElapsed = elapsed - i * config.staggerDelay;
         if (charElapsed >= config.charCycleDuration) {
           result += text[i];
@@ -82,10 +80,10 @@ export default function DecodeText({
 
     frameRef.current = requestAnimationFrame(tick);
     return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [active, text, config, delay]);
+  }, [active, text, config.staggerDelay, config.charCycleDuration, delay, reducedMotion]);
 
   if (!active && !doneRef.current) {
-    return <span className={`${className} invisible`}>{text}</span>;
+    return <span className={`${className} invisible`} aria-hidden="true">{text}</span>;
   }
 
   const showFringe = isDecoding && config.rgbFringe;

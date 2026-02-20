@@ -11,30 +11,28 @@ export default function NoiseBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Use a small tile rendered at low-res, stretched via CSS
+    // Check reduced motion — disable noise entirely
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mq.matches) return;
+
     const SIZE = 128;
     canvas.width = SIZE;
     canvas.height = SIZE;
 
-    let animId: number;
     const imageData = ctx.createImageData(SIZE, SIZE);
     const buf = imageData.data;
+    let animId: number;
 
     const animate = () => {
       for (let i = 0; i < buf.length; i += 4) {
         const v = (Math.random() * 20) | 0;
-        buf[i] = v;
-        buf[i + 1] = v;
-        buf[i + 2] = v;
-        buf[i + 3] = 12;
+        buf[i] = v; buf[i + 1] = v; buf[i + 2] = v; buf[i + 3] = 12;
       }
       ctx.putImageData(imageData, 0, 0);
       animId = requestAnimationFrame(animate);
     };
 
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (!mq.matches) animate();
-
+    animate();
     return () => cancelAnimationFrame(animId);
   }, []);
 
@@ -43,7 +41,7 @@ export default function NoiseBackground() {
       ref={canvasRef}
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none w-full h-full"
-      style={{ zIndex: 9999, mixBlendMode: "screen", imageRendering: "auto" }}
+      style={{ zIndex: 9999, mixBlendMode: "screen" }}
     />
   );
 }
