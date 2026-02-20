@@ -36,7 +36,7 @@ function eo(t:number){return 1-Math.pow(1-t,3);}
 function eio(t:number){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 function cl(t:number){return Math.max(0,Math.min(1,t));}
 function lr(a:number,b:number,t:number){return a+(b-a)*t;}
-function dec(target:string,p:number):string{
+function dec(target:string,p:number):string{if(p>=1)return target;
   let s="";for(let i=0;i<target.length;i++){
     const cp=cl((p*target.length-i)/3);
     if(target[i]===" "){s+=" ";continue;}
