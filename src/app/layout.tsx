@@ -23,13 +23,13 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "xShot.exe — Execution Contracts for AI Pipelines",
+  title: "xShot.exe — AI Pipeline Infrastructure",
   description:
-    "Turn fragile notebooks, comfy workflows, and glue code into typed, linear pipelines with retries, fallbacks, and a stable API.",
+    "Your AI pipeline breaks at 3am. An agent builds it, handles failures, and deploys it as a stable API. No infra. No babysitting.",
   openGraph: {
     title: "xShot.exe — Execution Contracts for AI Pipelines",
     description:
-      "Ship your pipeline. Stop babysitting it.",
+      "Your AI pipeline breaks at 3am. Not anymore.",
     type: "website",
   },
 };

@@ -30,7 +30,7 @@ export default function HowItWorks() {
 
       <div style={{ position: "relative", maxWidth: "1280px", marginLeft: "auto", marginRight: "auto", paddingLeft: "clamp(24px, 4vw, 48px)", paddingRight: "clamp(24px, 4vw, 48px)" }}>
         <div className="type-label" style={{ color: labelLit ? "var(--signal-cyan-60)" : "var(--signal-ghost)", transition: "color 0.3s", marginBottom: "48px" }}>
-          <TypewriterText text="RX-01 / PIPELINE CONTRACTION" active={isActive} charDelay={15} onComplete={() => setLabelLit(true)} />
+          <TypewriterText text="RX-01 / HOW IT WORKS" active={isActive} charDelay={15} onComplete={() => setLabelLit(true)} />
         </div>
 
         <div className="flex flex-col lg:flex-row" style={{ alignItems: "stretch" }}>
@@ -53,9 +53,9 @@ export default function HowItWorks() {
         </div>
 
         <div style={{ marginTop: "64px", display: "flex", flexDirection: "column", gap: "4px", fontSize: "var(--text-system-lg)" }}>
-          <DecodeText text="notebooks, scripts, comfy workflows, jupyter, glue code." preset="body" active={copyVisible} className="block font-mono" />
-          <DecodeText text="whatever you have, contract it into a linear typed pipeline." preset="body" active={copyVisible} delay={650} className="block font-mono" />
-          <DecodeText text="retries, fallbacks, cost limits, versioned api. handled." preset="body" active={copyVisible} delay={1300} className="block font-mono" />
+          <DecodeText text="no more 3am debugging. no more $4 retries that go nowhere." preset="body" active={copyVisible} className="block font-mono" />
+          <DecodeText text="the agent builds the pipeline, handles the failures," preset="body" active={copyVisible} delay={650} className="block font-mono" />
+          <DecodeText text="and gives you an endpoint that just works." preset="body" active={copyVisible} delay={1300} className="block font-mono" />
         </div>
       </div>
     </section>

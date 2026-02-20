@@ -44,8 +44,8 @@ export default function CTA() {
           <Module moduleId="TX-00" active={isActive} delay={400} drawDuration={300} onBooted={onModuleBooted} className="w-full" style={{ maxWidth: "700px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "32px", paddingTop: "16px", paddingBottom: "24px" }}>
               <h2 className="type-display" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)", color: "var(--phosphor-white)", fontFamily: "var(--font-bebas-neue), 'Bebas Neue', sans-serif" }}>
-                <DecodeText text="you have a pipeline that works" preset="headline" active={moduleBooted} className="block" />
-                <DecodeText text="until it doesn't." preset="headline" active={moduleBooted} delay={400} onComplete={onHeadlineDone2} className="block" />
+                <DecodeText text="you built something that works." preset="headline" active={moduleBooted} className="block" />
+                <DecodeText text="keeping it working is the hard part." preset="headline" active={moduleBooted} delay={400} onComplete={onHeadlineDone2} className="block" />
               </h2>
 
               <p className="type-display" style={{ fontSize: "clamp(2.5rem, 6vw, 5.5rem)", color: "var(--signal-cyan-100)", fontFamily: "var(--font-bebas-neue), 'Bebas Neue', sans-serif" }}>
@@ -57,7 +57,7 @@ export default function CTA() {
               </div>
 
               <div style={{ opacity: taglineDone ? 1 : 0, transition: "opacity 0.4s ease" }}>
-                <span className="type-label" style={{ color: "var(--signal-ghost)" }}>currently onboarding by invite</span>
+                <span className="type-label" style={{ color: "var(--signal-ghost)" }}>currently onboarding by invite &middot; request a slot</span>
               </div>
             </div>
           </Module>
