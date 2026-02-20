@@ -6,24 +6,18 @@ import HowItWorks from "@/sections/HowItWorks";
 import CTA from "@/sections/CTA";
 import Footer from "@/sections/Footer";
 
-const NoiseBackground = dynamic(
-  () => import("@/components/shaders/NoiseBackground"),
-  { ssr: false }
-);
-const ScanlineOverlay = dynamic(
-  () => import("@/components/shaders/ScanlineOverlay"),
-  { ssr: false }
-);
+const NoiseBackground = dynamic(() => import("@/components/shaders/NoiseBackground"), { ssr: false });
+const ScanlineOverlay = dynamic(() => import("@/components/shaders/ScanlineOverlay"), { ssr: false });
 
 export default function Home() {
   return (
     <main className="relative min-h-screen" style={{ background: "var(--void-black)" }}>
-      {/* Global Atmosphere */}
-      <div className="dot-grid" aria-hidden="true" />
+      {/* Atmospheric layers */}
+      <div className="dot-grid" style={{ opacity: 0.35 }} aria-hidden="true" />
       <NoiseBackground />
       <ScanlineOverlay />
 
-      {/* Content Sections */}
+      {/* Content */}
       <Hero />
       <HowItWorks />
       <CTA />

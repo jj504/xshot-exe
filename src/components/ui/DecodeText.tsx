@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SCRAMBLE_CHARS, DECODE_PRESETS, type DecodePreset } from "@/lib/timing";
 
 interface DecodeTextProps {
@@ -22,96 +22,78 @@ export default function DecodeText({
 }: DecodeTextProps) {
   const [displayText, setDisplayText] = useState("");
   const [isDecoding, setIsDecoding] = useState(false);
-  const [isDone, setIsDone] = useState(false);
-  const frameRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
+  const doneRef = useRef(false);
+  const frameRef = useRef(0);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const config = DECODE_PRESETS[preset];
 
-  const decode = useCallback(() => {
-    if (!active || isDone) return;
+  useEffect(() => {
+    if (!active || doneRef.current) return;
 
-    const startTime = performance.now() + delay;
-    startTimeRef.current = startTime;
-    setIsDecoding(true);
-
-    const animate = (now: number) => {
-      const elapsed = now - startTime;
-      if (elapsed < 0) {
-        frameRef.current = requestAnimationFrame(animate);
+    // Reduced motion: instant
+    if (typeof window !== "undefined") {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      if (mq.matches) {
+        setDisplayText(text);
+        doneRef.current = true;
+        onCompleteRef.current?.();
         return;
       }
+    }
+
+    setIsDecoding(true);
+    const start = performance.now() + delay;
+
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      if (elapsed < 0) { frameRef.current = requestAnimationFrame(tick); return; }
 
       let result = "";
-      let allResolved = true;
+      let allDone = true;
 
       for (let i = 0; i < text.length; i++) {
-        if (text[i] === " " || text[i] === "\n") {
-          result += text[i];
-          continue;
-        }
+        if (text[i] === " " || text[i] === "\n") { result += text[i]; continue; }
 
-        const charStart = i * config.staggerDelay;
-        const charElapsed = elapsed - charStart;
-
+        const charElapsed = elapsed - i * config.staggerDelay;
         if (charElapsed >= config.charCycleDuration) {
           result += text[i];
         } else if (charElapsed > 0) {
-          allResolved = false;
-          const scrambleIdx = Math.floor(Math.random() * SCRAMBLE_CHARS.length);
-          result += SCRAMBLE_CHARS[scrambleIdx];
+          allDone = false;
+          result += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
         } else {
-          allResolved = false;
+          allDone = false;
           result += " ";
         }
       }
 
       setDisplayText(result);
 
-      if (allResolved) {
+      if (allDone) {
         setDisplayText(text);
         setIsDecoding(false);
-        setIsDone(true);
-        onComplete?.();
+        doneRef.current = true;
+        onCompleteRef.current?.();
       } else {
-        frameRef.current = requestAnimationFrame(animate);
+        frameRef.current = requestAnimationFrame(tick);
       }
     };
 
-    frameRef.current = requestAnimationFrame(animate);
+    frameRef.current = requestAnimationFrame(tick);
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [active, text, config, delay]);
 
-    return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [active, text, config, delay, onComplete, isDone]);
-
-  useEffect(() => {
-    if (active && !isDone) {
-      const cleanup = decode();
-      return cleanup;
-    }
-  }, [active, decode, isDone]);
-
-  // Reduced motion: show text immediately
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-      if (mq.matches && active) {
-        setDisplayText(text);
-        setIsDone(true);
-        onComplete?.();
-      }
-    }
-  }, [active, text, onComplete]);
-
-  if (!active && !isDone) {
-    return <span className={`${className} opacity-0`}>{text}</span>;
+  if (!active && !doneRef.current) {
+    return <span className={`${className} invisible`}>{text}</span>;
   }
+
+  const showFringe = isDecoding && config.rgbFringe;
 
   return (
     <span
-      className={`${className} ${isDecoding && config.rgbFringe ? "rgb-fringe" : ""}`}
-      data-text={isDecoding ? displayText : undefined}
+      className={`${className} ${showFringe ? "rgb-fringe" : ""}`}
+      data-text={showFringe ? displayText : undefined}
     >
       {displayText || text}
     </span>

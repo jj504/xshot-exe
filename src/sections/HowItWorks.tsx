@@ -7,9 +7,10 @@ import DecodeText from "@/components/ui/DecodeText";
 import Module from "@/components/ui/Module";
 import ErrorLog from "@/components/ui/ErrorLog";
 import PipelineStatus from "@/components/ui/PipelineStatus";
+import GlyphDivider from "@/components/ui/GlyphDivider";
 
 export default function HowItWorks() {
-  const { ref, isActive } = useScrollActivation(0.2);
+  const { ref, isActive } = useScrollActivation(0.15);
   const [leftBooted, setLeftBooted] = useState(false);
   const [rightBooted, setRightBooted] = useState(false);
   const [copyVisible, setCopyVisible] = useState(false);
@@ -21,8 +22,25 @@ export default function HowItWorks() {
   }, []);
 
   return (
-    <section ref={ref} className="relative z-10 py-24 md:py-32">
-      <div className="max-w-7xl mx-auto px-6 md:px-12">
+    <section
+      ref={ref}
+      className="relative z-10 py-24 md:py-32"
+      style={{ marginTop: "80px" }}
+    >
+      {/* Section-specific dot grid brightening */}
+      {isActive && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle, var(--signal-ghost) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+            opacity: 0.15,
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className="relative max-w-7xl mx-auto px-6 md:px-12">
         {/* Section Label */}
         <div className="type-label mb-12" style={{ color: "var(--signal-cyan-60)" }}>
           <TypewriterText
@@ -32,10 +50,10 @@ export default function HowItWorks() {
           />
         </div>
 
-        {/* Panels */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-0">
-          {/* Left Panel — BEFORE */}
-          <div className="flex-1">
+        {/* Two Panels */}
+        <div className="flex flex-col lg:flex-row items-stretch">
+          {/* Left — BEFORE */}
+          <div className="flex-1 min-w-0">
             <Module
               moduleId="DIAG-00"
               status="FRAGILE"
@@ -48,23 +66,18 @@ export default function HowItWorks() {
             </Module>
           </div>
 
-          {/* Center Divider */}
-          <div className="flex items-center justify-center lg:px-6 py-4 lg:py-0">
-            <div
-              className="font-mono text-center"
-              style={{ color: "var(--signal-cyan-100)" }}
-            >
-              <span className="hidden lg:block text-2xl" style={{ opacity: isActive ? 1 : 0.3, animation: "pulse 2s ease-in-out infinite" }}>
-                {"\u25B8"}
-              </span>
-              <span className="lg:hidden text-2xl" style={{ opacity: isActive ? 1 : 0.3, animation: "pulse 2s ease-in-out infinite" }}>
-                {"\u25BE"}
-              </span>
+          {/* Glyph Divider */}
+          <div className="flex items-center justify-center lg:px-5 py-6 lg:py-0">
+            <div className="hidden lg:block">
+              <GlyphDivider active={isActive} vertical={true} />
+            </div>
+            <div className="lg:hidden">
+              <GlyphDivider active={isActive} vertical={false} />
             </div>
           </div>
 
-          {/* Right Panel — AFTER */}
-          <div className="flex-1">
+          {/* Right — AFTER */}
+          <div className="flex-1 min-w-0">
             <Module
               moduleId="DIAG-01"
               status="CONTRACTED"
@@ -72,14 +85,13 @@ export default function HowItWorks() {
               active={isActive}
               delay={600}
               onBooted={onRightBooted}
-              className=""
             >
               <PipelineStatus active={rightBooted} />
             </Module>
           </div>
         </div>
 
-        {/* Copy Below Panels */}
+        {/* Copy Below */}
         <div className="mt-16 space-y-1" style={{ fontSize: "var(--text-system-lg)" }}>
           <DecodeText
             text="notebooks, scripts, comfy workflows, jupyter, glue code."

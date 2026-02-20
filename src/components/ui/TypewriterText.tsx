@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TypewriterTextProps {
   text: string;
@@ -23,41 +23,41 @@ export default function TypewriterText({
 }: TypewriterTextProps) {
   const [displayed, setDisplayed] = useState("");
   const [showCursor, setShowCursor] = useState(false);
-  const [isDone, setIsDone] = useState(false);
+  const doneRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (!active || isDone) return;
+    if (!active || doneRef.current) return;
 
-    const timeout = setTimeout(() => {
+    const t1 = setTimeout(() => {
       setShowCursor(true);
       let i = 0;
-      const interval = setInterval(() => {
+      const iv = setInterval(() => {
         i++;
         setDisplayed(text.slice(0, i));
         if (i >= text.length) {
-          clearInterval(interval);
+          clearInterval(iv);
           setTimeout(() => {
             setShowCursor(false);
-            setIsDone(true);
-            onComplete?.();
+            doneRef.current = true;
+            onCompleteRef.current?.();
           }, cursorDuration);
         }
       }, charDelay);
-
-      return () => clearInterval(interval);
     }, delay);
 
-    return () => clearTimeout(timeout);
-  }, [active, text, delay, charDelay, cursorDuration, onComplete, isDone]);
+    return () => clearTimeout(t1);
+  }, [active, text, delay, charDelay, cursorDuration]);
 
-  if (!active && !isDone) {
-    return <span className={`${className} opacity-0`}>{text}</span>;
+  if (!active && !doneRef.current) {
+    return <span className={`${className} invisible`}>{text}</span>;
   }
 
   return (
     <span className={className}>
       {displayed}
-      {showCursor && <span className="cursor-blink">\u2588</span>}
+      {showCursor && <span className="cursor-blink">{"\u2588"}</span>}
     </span>
   );
 }

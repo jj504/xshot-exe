@@ -1,30 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* === VOID === */
   --void-black: #05080A;
   --void-deep: #0A0D10;
-
-  /* === SIGNAL === */
   --signal-cyan-100: #00F0FF;
   --signal-cyan-60: #00F0FF99;
   --signal-cyan-15: #00F0FF26;
   --signal-cyan-05: #00F0FF0D;
-
-  /* === INTERFERENCE === */
   --interference-orange: #FF5A1F;
   --interference-orange-80: #FF5A1FCC;
   --interference-orange-40: #FF5A1F66;
-
-  /* === PHOSPHOR === */
   --phosphor-white: #E0F0F0;
   --phosphor-dim: #B0C4C4;
-
-  /* === GHOST === */
   --signal-ghost: #1A2A2E;
   --signal-ghost-light: #243438;
-
-  /* === TYPE SCALE === */
   --text-display-xl: clamp(3rem, 8vw, 7rem);
   --text-display-lg: clamp(2rem, 5vw, 4rem);
   --text-display-md: clamp(1.5rem, 3vw, 2.5rem);
@@ -35,31 +24,24 @@
 }
 
 @theme inline {
-  --color-void-black: var(--void-black);
-  --color-void-deep: var(--void-deep);
-  --color-signal-cyan: var(--signal-cyan-100);
+  --color-void-black: #05080A;
+  --color-void-deep: #0A0D10;
+  --color-signal-cyan: #00F0FF;
   --color-signal-cyan-60: #00F0FF99;
   --color-signal-cyan-15: #00F0FF26;
   --color-signal-cyan-05: #00F0FF0D;
-  --color-interference-orange: var(--interference-orange);
-  --color-phosphor-white: var(--phosphor-white);
-  --color-phosphor-dim: var(--phosphor-dim);
-  --color-signal-ghost: var(--signal-ghost);
-  --color-signal-ghost-light: var(--signal-ghost-light);
+  --color-interference-orange: #FF5A1F;
+  --color-phosphor-white: #E0F0F0;
+  --color-phosphor-dim: #B0C4C4;
+  --color-signal-ghost: #1A2A2E;
+  --color-signal-ghost-light: #243438;
   --font-mono: var(--font-jetbrains-mono);
   --font-display: var(--font-bebas-neue);
   --font-label: var(--font-barlow-condensed);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   background-color: var(--void-black);
@@ -69,6 +51,7 @@ body {
   -moz-osx-font-smoothing: auto;
 }
 
+/* ======= DOT GRID ======= */
 .dot-grid {
   position: fixed;
   inset: 0;
@@ -76,9 +59,10 @@ body {
   pointer-events: none;
   background-image: radial-gradient(circle, var(--signal-ghost) 1px, transparent 1px);
   background-size: 24px 24px;
-  opacity: 0.4;
+  transition: opacity 1.2s ease;
 }
 
+/* ======= SCANLINES ======= */
 .scanlines {
   pointer-events: none;
   position: fixed;
@@ -93,36 +77,82 @@ body {
   );
   animation: scanlineDrift 8s linear infinite;
 }
-
 @keyframes scanlineDrift {
   0% { transform: translateY(0); }
   100% { transform: translateY(4px); }
 }
 
+/* ======= BLINK ======= */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+.cursor-blink { animation: blink 1s step-end infinite; }
 
-.cursor-blink {
-  animation: blink 1s step-end infinite;
+/* ======= PULSE ======= */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
+/* ======= TYPE CLASSES ======= */
 .type-display {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1.05;
 }
-
 .type-label {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: var(--text-label);
 }
+.type-system {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+}
 
+/* ======= RGB FRINGE ======= */
+.rgb-fringe {
+  position: relative;
+  display: inline-block;
+}
+.rgb-fringe::before,
+.rgb-fringe::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.rgb-fringe::before {
+  color: rgba(0, 240, 255, 0.5);
+  transform: translate(-1.5px, 0);
+  clip-path: inset(0 0 50% 0);
+}
+.rgb-fringe::after {
+  color: rgba(255, 90, 31, 0.35);
+  transform: translate(1.5px, 0);
+  clip-path: inset(50% 0 0 0);
+}
+
+/* ======= MODULE BORDER DRAW ======= */
+@keyframes borderDraw {
+  0% { clip-path: inset(0 100% 100% 0); }
+  25% { clip-path: inset(0 0 100% 0); }
+  50% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+.module-border-draw {
+  animation: borderDraw 0.2s linear forwards;
+}
+
+/* ======= REDUCED MOTION ======= */
 @media (prefers-reduced-motion: reduce) {
   .scanlines { animation: none; }
   .cursor-blink { animation: none; opacity: 1; }
+  .module-border-draw { animation: none; clip-path: none; }
 }
 
 ::selection {

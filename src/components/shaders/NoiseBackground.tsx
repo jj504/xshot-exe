@@ -8,54 +8,42 @@ export default function NoiseBackground() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    // Use a small tile rendered at low-res, stretched via CSS
+    const SIZE = 128;
+    canvas.width = SIZE;
+    canvas.height = SIZE;
 
     let animId: number;
+    const imageData = ctx.createImageData(SIZE, SIZE);
+    const buf = imageData.data;
+
     const animate = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      const imageData = ctx.createImageData(w, h);
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const v = Math.random() * 12;
-        data[i] = v;
-        data[i + 1] = v;
-        data[i + 2] = v;
-        data[i + 3] = 10; // ~4% opacity
+      for (let i = 0; i < buf.length; i += 4) {
+        const v = (Math.random() * 20) | 0;
+        buf[i] = v;
+        buf[i + 1] = v;
+        buf[i + 2] = v;
+        buf[i + 3] = 12;
       }
-
       ctx.putImageData(imageData, 0, 0);
       animId = requestAnimationFrame(animate);
     };
 
-    // Check reduced motion
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (!mq.matches) {
-      animate();
-    }
+    if (!mq.matches) animate();
 
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-    };
+    return () => cancelAnimationFrame(animId);
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999, mixBlendMode: "screen" }}
       aria-hidden="true"
+      className="fixed inset-0 pointer-events-none w-full h-full"
+      style={{ zIndex: 9999, mixBlendMode: "screen", imageRendering: "auto" }}
     />
   );
 }
